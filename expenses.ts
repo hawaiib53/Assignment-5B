@@ -1,6 +1,5 @@
 import { supabase } from './supabaseClient';
 import type { CategoryBudgetSummary, Expense, ExpenseCategory, ExpenseStatus, YearlyExpenseSummary } from '../types';
-import { BOARD_REVIEW_THRESHOLD } from '../types';
 
 export async function getYearlySummary(year: number): Promise<YearlyExpenseSummary | null> {
   const { data, error } = await supabase
@@ -36,6 +35,18 @@ export async function getRecentExpenses(limit = 10): Promise<Expense[]> {
   return data ?? [];
 }
 
+export async function getExpensesForYear(year: number): Promise<Expense[]> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .gte('expense_date', `${year}-01-01`)
+    .lte('expense_date', `${year}-12-31`)
+    .order('expense_date', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 const AWAITING_APPROVAL_STATUSES: ExpenseStatus[] = ['pending', 'needs_board'];
 
 export async function getPendingApprovalCount(year: number): Promise<number> {
@@ -60,9 +71,13 @@ export interface NewExpenseInput {
   receiptFile?: File;
 }
 
+/**
+ * Uploads the receipt (if any) then hands the expense off to the
+ * evaluate-expense edge function, which asks Claude to decide whether it
+ * needs board review (based on amount and how unusual the item is) before
+ * inserting the record.
+ */
 export async function submitExpense(input: NewExpenseInput): Promise<Expense> {
-  const status: ExpenseStatus = input.amount > BOARD_REVIEW_THRESHOLD ? 'needs_board' : 'pending';
-
   let receiptPath: string | null = null;
   if (input.receiptFile) {
     const path = `${crypto.randomUUID()}-${input.receiptFile.name}`;
@@ -71,21 +86,18 @@ export async function submitExpense(input: NewExpenseInput): Promise<Expense> {
     receiptPath = path;
   }
 
-  const { data, error } = await supabase
-    .from('expenses')
-    .insert({
-      requester_name: input.requesterName,
-      amount: input.amount,
-      expense_date: input.expenseDate,
-      items_purchased: [input.itemDescription],
-      justification: input.notes || null,
+  const { data, error } = await supabase.functions.invoke('evaluate-expense', {
+    body: {
+      requesterName: input.requesterName,
+      itemDescription: input.itemDescription,
       category: input.category,
-      status,
-      receipt_path: receiptPath,
-    })
-    .select()
-    .single();
+      amount: input.amount,
+      expenseDate: input.expenseDate,
+      notes: input.notes,
+      receiptPath,
+    },
+  });
 
   if (error) throw error;
-  return data;
+  return data as Expense;
 }

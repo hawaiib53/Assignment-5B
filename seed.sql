@@ -11,3 +11,9 @@ insert into expenses (requester_name, amount, expense_date, items_purchased, jus
   ('Ada L.', 62, '2026-07-28', '{Picnic supplies}', 'Picnic supplies', 'pending', 'event_supplies'),
   ('Mei T.', 24, '2026-07-22', '{Park entry fees}', 'Park entry fees', 'approved', 'event_supplies'),
   ('Board', 210, '2026-07-14', '{Shelter donation}', 'Local shelter donation', 'approved', 'donations');
+
+-- The treasury fund is normally only written by the nightly cron job, which
+-- won't fire in a fresh local dev database. Seed a starting balance and run
+-- the same recompute function it calls, so the dashboard shows a real number.
+update treasury_fund set starting_balance = 2500 where id = 1;
+select recompute_treasury_fund();

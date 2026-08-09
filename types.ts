@@ -32,6 +32,7 @@ export interface Expense {
   status: ExpenseStatus;
   category: ExpenseCategory;
   receipt_path: string | null;
+  review_reason: string | null;
   created_at: string;
 }
 
@@ -50,5 +51,21 @@ export interface YearlyExpenseSummary {
   budget_remaining: number;
 }
 
-/** Expenses at or under this amount are auto-approved; over it, they need board sign-off. */
-export const BOARD_REVIEW_THRESHOLD = 100;
+/**
+ * The club's on-hand balance. Unlike the budget views above, this isn't
+ * computed live — it's written once a day by a scheduled back-end job
+ * (see supabase/migrations, `treasury-fund-nightly-update`), so
+ * `updated_at` reflects that job's last run, not the current moment.
+ */
+export interface TreasuryFund {
+  starting_balance: number;
+  current_balance: number;
+  updated_at: string;
+}
+
+/**
+ * One signal Claude weighs when deciding whether to flag an expense for board
+ * review — the other being whether the item/service is unusual for the club.
+ * The actual decision is made by the evaluate-expense edge function, not the client.
+ */
+export const REVIEW_AMOUNT_THRESHOLD = 300;

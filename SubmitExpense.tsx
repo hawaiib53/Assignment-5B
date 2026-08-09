@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Nav } from '../components/Nav';
 import { submitExpense } from '../lib/expenses';
 import type { ExpenseCategory } from '../types';
-import { BOARD_REVIEW_THRESHOLD, CATEGORIES, CATEGORY_FORM_LABELS } from '../types';
+import { CATEGORIES, CATEGORY_FORM_LABELS, REVIEW_AMOUNT_THRESHOLD } from '../types';
 
 export function SubmitExpense() {
   const navigate = useNavigate();
@@ -61,7 +61,8 @@ export function SubmitExpense() {
       <form className="form-wrap" onSubmit={handleSubmit}>
         <h1 className="form-title">Submit an expense</h1>
         <p className="form-subtitle">
-          Anything over ${BOARD_REVIEW_THRESHOLD} automatically goes to the board for sign-off.
+          Expenses are automatically screened. Large (generally over ${REVIEW_AMOUNT_THRESHOLD}) or unusual
+          purchases get flagged for the board.
         </p>
 
         <div className="field">

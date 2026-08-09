@@ -8,9 +8,9 @@ const TAG_CLASS: Record<ExpenseStatus, string> = {
   rejected: 'tag tag-neutral',
 };
 
-export function StatusTag({ status }: { status: ExpenseStatus }) {
+export function StatusTag({ status, reason }: { status: ExpenseStatus; reason?: string | null }) {
   return (
-    <span className={TAG_CLASS[status]} style={{ whiteSpace: 'nowrap' }}>
+    <span className={TAG_CLASS[status]} style={{ whiteSpace: 'nowrap' }} title={reason ?? undefined}>
       {STATUS_LABELS[status]}
     </span>
   );

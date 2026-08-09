@@ -35,7 +35,7 @@ export function ExpenseTable({ expenses }: { expenses: Expense[] }) {
             <td>{CATEGORY_LABELS[expense.category]}</td>
             <td>{currency(expense.amount)}</td>
             <td>
-              <StatusTag status={expense.status} />
+              <StatusTag status={expense.status} reason={expense.review_reason} />
             </td>
           </tr>
         ))}

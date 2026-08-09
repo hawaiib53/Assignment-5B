@@ -9,7 +9,7 @@ export function Nav({ showNewExpenseButton = false }: NavProps) {
 
   return (
     <nav className="nav page-nav">
-      <span className="nav-brand">Cedar Grove Bird Club</span>
+      <span className="nav-brand">St. Croix Valley Bird Club</span>
       <NavLink to="/" end>
         Dashboard
       </NavLink>
