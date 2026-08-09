@@ -100,7 +100,6 @@ export function Dashboard() {
       )}
 
       <div className="stat-grid">
-        <StatCard value={currency(summary?.total_requested ?? 0)} label="Spent this year" />
         <StatCard value={String(pendingCount)} label="Pending approval" />
         <StatCard value={currency(summary?.yearly_budget ?? 0)} label="Annual budget" />
       </div>
