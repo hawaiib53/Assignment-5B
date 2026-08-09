@@ -69,3 +69,10 @@ export interface TreasuryFund {
  * The actual decision is made by the evaluate-expense edge function, not the client.
  */
 export const REVIEW_AMOUNT_THRESHOLD = 300;
+
+/**
+ * Expenses under this amount are auto-approved, unless Claude flags them as
+ * unusual regardless of amount. Applied in the evaluate-expense edge
+ * function, not the client — duplicated here only for form copy.
+ */
+export const AUTO_APPROVE_THRESHOLD = 50;

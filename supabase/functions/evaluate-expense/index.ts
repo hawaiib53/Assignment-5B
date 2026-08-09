@@ -8,6 +8,16 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import Anthropic from 'npm:@anthropic-ai/sdk@0.71.0';
 
 const REVIEW_AMOUNT_THRESHOLD = 300;
+const AUTO_APPROVE_THRESHOLD = 50;
+
+// Supabase Edge Functions don't add CORS headers on their own — without
+// these, every call from the browser (a different origin than the function)
+// is blocked by the browser before it even reaches this code.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
 
@@ -92,8 +102,12 @@ async function evaluateExpense(input: EvaluationInput): Promise<{ needsReview: b
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
   let body: Record<string, unknown>;
@@ -102,7 +116,7 @@ Deno.serve(async (req) => {
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -119,12 +133,25 @@ Deno.serve(async (req) => {
   if (!requesterName || !itemDescription || !category || !amount || amount <= 0 || !expenseDate) {
     return new Response(JSON.stringify({ error: 'Missing or invalid required fields' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
-  const { needsReview, reason } = await evaluateExpense({ itemDescription, category, amount, notes });
-  const status = needsReview ? 'needs_board' : 'pending';
+  const { needsReview, reason: claudeReason } = await evaluateExpense({ itemDescription, category, amount, notes });
+
+  let status: 'pending' | 'needs_board' | 'approved';
+  let reviewReason: string;
+
+  if (needsReview) {
+    status = 'needs_board';
+    reviewReason = claudeReason;
+  } else if (amount < AUTO_APPROVE_THRESHOLD) {
+    status = 'approved';
+    reviewReason = `Auto-approved: under the $${AUTO_APPROVE_THRESHOLD} threshold and not flagged as unusual.`;
+  } else {
+    status = 'pending';
+    reviewReason = claudeReason;
+  }
 
   const { data, error } = await supabase
     .from('expenses')
@@ -136,7 +163,7 @@ Deno.serve(async (req) => {
       justification: notes || null,
       category,
       status,
-      review_reason: reason,
+      review_reason: reviewReason,
       receipt_path: receiptPath ?? null,
     })
     .select()
@@ -146,12 +173,12 @@ Deno.serve(async (req) => {
     console.error('Failed to insert expense:', error);
     return new Response(JSON.stringify({ error: 'Failed to save expense' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
   return new Response(JSON.stringify(data), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
