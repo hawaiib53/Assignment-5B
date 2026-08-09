@@ -29,7 +29,7 @@ export function SubmitExpense() {
     event.preventDefault();
     setError(null);
 
-    const parsedAmount = Number(amount);
+    const parsedAmount = Number(amount.replace(/[^0-9.]/g, ''));
     if (!requesterName.trim() || !itemDescription.trim() || !expenseDate || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       setError('Please fill in your name, what it was for, a valid amount, and the date.');
       return;
