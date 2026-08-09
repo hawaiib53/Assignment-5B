@@ -80,7 +80,12 @@ export interface NewExpenseInput {
 export async function submitExpense(input: NewExpenseInput): Promise<Expense> {
   let receiptPath: string | null = null;
   if (input.receiptFile) {
-    const path = `${crypto.randomUUID()}-${input.receiptFile.name}`;
+    // Build the storage path from a fresh UUID rather than the original
+    // filename — user-supplied filenames often contain spaces or other
+    // characters Supabase Storage rejects as an invalid object path.
+    const dotIndex = input.receiptFile.name.lastIndexOf('.');
+    const extension = dotIndex > 0 ? input.receiptFile.name.slice(dotIndex + 1).replace(/[^a-zA-Z0-9]/g, '') : '';
+    const path = extension ? `${crypto.randomUUID()}.${extension}` : crypto.randomUUID();
     const { error: uploadError } = await supabase.storage.from('receipts').upload(path, input.receiptFile);
     if (uploadError) throw uploadError;
     receiptPath = path;
