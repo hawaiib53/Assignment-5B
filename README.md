@@ -44,9 +44,9 @@ The practical difference shows up on the Dashboard: the "Spent this year" and "B
 
 ## Project structure
 
-- `src/pages/` — route-level screens (`Dashboard`, `SubmitExpense`, `Approvals`)
-- `src/components/` — shared UI pieces (nav, stat cards, category progress bars, status tags, expense table)
-- `src/lib/` — Supabase client and data-access functions
+- `src/pages/` — route-level screens (`Dashboard`, `SubmitExpense`, `Approvals`, `Login`, `Signup`)
+- `src/components/` — shared UI pieces (nav, stat cards, category progress bars, status tags, expense table, `ProtectedRoute`)
+- `src/lib/` — Supabase client, auth helpers, and data-access functions
 - `src/styles/organic.css` — the design system's tokens and component classes
 - `src/styles/app.css` — page-level layout classes built on top of the design system
 - `supabase/migrations/` — schema, in order
@@ -55,4 +55,5 @@ The practical difference shows up on the Dashboard: the "Spent this year" and "B
 ## Notes
 
 - The `Approvals` page is a placeholder — the treasurer/board approval queue was designed separately and wasn't part of the wireframe handoff.
+- **Approvals is behind Supabase Auth.** The Dashboard and Submit expense pages stay open to anyone (matching the original wireframes), but `/approvals` is wrapped in `ProtectedRoute` (`src/components/ProtectedRoute.tsx`) and redirects signed-out visitors to `/login`. Auth uses `supabase-js`'s built-in email/password Auth — sign up at `/signup`, log in at `/login`, log out via the nav bar — with the session persisted automatically by `supabase-js` (localStorage), no server or middleware involved since this is a client-only Vite SPA. See `src/lib/auth.ts`.
 - **Expense review is agentic, not a fixed rule.** Every submission goes through the `evaluate-expense` edge function, which asks Claude to decide whether the item/service looks unusual for the club, and combines that with the amount to land on one of three outcomes: expenses under $50 that aren't flagged are auto-`approved`; expenses $50 and up that aren't flagged go to `pending` for normal treasurer sign-off; anything flagged as unusual — regardless of amount — or over $300 goes to `needs_board`, even if it's small. Claude's one-sentence rationale is stored on `expenses.review_reason` and shown as a tooltip on the status tag. If the model call fails for any reason, the function fails safe and routes to `needs_board` rather than silently auto-approving.
