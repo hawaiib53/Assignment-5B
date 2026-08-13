@@ -108,6 +108,34 @@ a:hover {
   background: var(--color-accent-2);
 }
 
+/* — approvals tabs — */
+.tab-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+.tab {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.tab:hover {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+.tab-active,
+.tab-active:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
 /* — submit expense form — */
 .form-wrap {
   max-width: 480px;

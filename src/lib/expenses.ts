@@ -61,6 +61,53 @@ export async function getPendingApprovalCount(year: number): Promise<number> {
   return count ?? 0;
 }
 
+export async function getExpensesByStatus(status: ExpenseStatus): Promise<Expense[]> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('status', status)
+    .order('expense_date', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getReceiptUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 60 * 10);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+/** Approve/deny require an authenticated session — see the RLS policy on `expenses`. */
+export async function approveExpense(id: string, reviewerEmail: string): Promise<Expense> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .update({ status: 'approved', reviewed_by: reviewerEmail, reviewed_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function denyExpense(id: string, reviewerEmail: string, reason: string): Promise<Expense> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .update({
+      status: 'rejected',
+      reviewed_by: reviewerEmail,
+      reviewed_at: new Date().toISOString(),
+      denial_reason: reason,
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export interface NewExpenseInput {
   requesterName: string;
   itemDescription: string;

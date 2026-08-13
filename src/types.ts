@@ -33,6 +33,9 @@ export interface Expense {
   category: ExpenseCategory;
   receipt_path: string | null;
   review_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  denial_reason: string | null;
   created_at: string;
 }
 
