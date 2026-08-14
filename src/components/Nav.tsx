@@ -29,6 +29,7 @@ export function Nav({ showNewExpenseButton = false }: NavProps) {
       </NavLink>
       <NavLink to="/submit-expense">Submit expense</NavLink>
       <NavLink to="/approvals">Approvals</NavLink>
+      <NavLink to="/budgets">Budgets</NavLink>
       {session && (
         <button type="button" className="btn btn-secondary" onClick={handleLogout}>
           Log out

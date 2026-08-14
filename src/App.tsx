@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard';
 import { SubmitExpense } from './pages/SubmitExpense';
 import { Approvals } from './pages/Approvals';
+import { Budgets } from './pages/Budgets';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -18,6 +19,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Approvals />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/budgets"
+        element={
+          <ProtectedRoute>
+            <Budgets />
           </ProtectedRoute>
         }
       />
