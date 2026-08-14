@@ -3,6 +3,7 @@ import { Nav } from '../components/Nav';
 import { ReviewDialog } from '../components/ReviewDialog';
 import { getSession } from '../lib/auth';
 import { getExpensesByStatus } from '../lib/expenses';
+import { sendApprovalsReport } from '../lib/reports';
 import type { Expense, ExpenseStatus } from '../types';
 import { CATEGORY_LABELS, REVIEW_AMOUNT_THRESHOLD } from '../types';
 
@@ -32,6 +33,9 @@ export function Approvals() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState<Expense | null>(null);
+  const [sendingReport, setSendingReport] = useState(false);
+  const [sendReportError, setSendReportError] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const loadExpenses = useCallback(async () => {
     setLoading(true);
@@ -59,6 +63,20 @@ export function Approvals() {
   const activeExpenses = expensesByStatus[activeTab];
   const isActionable = activeTab === 'pending' || activeTab === 'needs_board';
 
+  async function handleSendReport() {
+    setSendReportError(null);
+    setSentTo(null);
+    setSendingReport(true);
+    try {
+      const recipient = await sendApprovalsReport();
+      setSentTo(recipient);
+    } catch (err) {
+      setSendReportError(err instanceof Error ? err.message : 'Failed to send report.');
+    } finally {
+      setSendingReport(false);
+    }
+  }
+
   return (
     <div className="page">
       <Nav />
@@ -70,7 +88,13 @@ export function Approvals() {
             Expenses flagged as unusual or over ${REVIEW_AMOUNT_THRESHOLD} need board sign-off before they're final.
           </p>
         </div>
+        <button type="button" className="btn btn-secondary" onClick={handleSendReport} disabled={sendingReport}>
+          {sendingReport ? 'Sending…' : 'Send report to email'}
+        </button>
       </div>
+
+      {sendReportError && <p className="form-error">{sendReportError}</p>}
+      {sentTo && <p className="hint">Full approvals report sent to {sentTo}.</p>}
 
       <div className="tab-row">
         {TABS.map((tab) => (

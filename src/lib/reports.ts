@@ -54,3 +54,15 @@ export async function downloadExpenseReport(year: number): Promise<void> {
 
   triggerCsvDownload(csv, `st-croix-valley-expenses-${year}.csv`);
 }
+
+/**
+ * The full approvals report (every expense, every status, no year filter),
+ * emailed to whichever logged-in user requested it. The edge function reads
+ * the recipient off the caller's session rather than trusting the client, so
+ * this always goes to the signed-in user, never an address they typed in.
+ */
+export async function sendApprovalsReport(): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('send-approvals-report', { body: {} });
+  if (error) throw error;
+  return (data as { sentTo: string }).sentTo;
+}
